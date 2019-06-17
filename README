@@ -1,0 +1,32 @@
+mailbin
+=======
+
+This is a collection of scripts used to manage my local mailbox with
+mblaze (https://github.com/leahneukirchen/mblaze).
+
+
+Setup
+-----
+
+1. Install mblaze:
+
+    # xbps-install mblaze
+
+2. Install the scripts:
+
+    $ make install
+
+    OR
+
+    $ stow --verbose --dir . --target "$HOME/bin" --stow mail
+
+
+Maildir
+-------
+
+Setting up the maildirs is simple:
+
+    $ mkdir -p ~/mail/archive
+    $ mmkdir ~/mail ~/mail/archive
+
+If possible, you should encrypt your maildir(s) using encfs.

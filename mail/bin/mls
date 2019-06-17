@@ -1,0 +1,122 @@
+#!/bin/bash
+: "${MAIL_INBOX:=$HOME/mail}"
+: "${MAIL_ARCHIVE:=$HOME/mail/archive}"
+
+args=()
+scan=0
+archive=none
+if [ -t 1 ]; then
+  scan=1
+fi
+
+sortflag=
+cutcmd=
+cutflag=
+format=
+
+greps=()
+for arg; do
+  shift
+  case "$arg" in
+  +*)
+    arg="${arg#+}"
+    format+="${format:+${arg:+ }}${arg}"
+    shift
+    ;;
+  %*)
+    format+="${format:+${arg:+ }}${arg}"
+    shift
+    ;;
+  -L)
+    scan=1
+    shift
+    ;;
+  -l)
+    scan=0
+    shift
+    ;;
+  -a)
+    archive=incl
+    ;;
+  -A)
+    archive=only
+    ;;
+  ,[rfdsFMSUI]*)
+    sortflag+=${arg#,}
+    ;;
+  -[0-9]*)
+    cutflag=-n$arg
+    cutcmd=tail
+    ;;
+  +[0-9]*)
+    cutflag=-n$arg
+    cutcmd=head
+    ;;
+  -*)
+    args[${#args[@]}]="$arg"
+    ;;
+  /:*|*[a-zA-Z]:*)
+    greps[${#greps[@]}]="$arg"
+    ;;
+  *)
+    args[${#args[@]}]="$arg"
+    ;;
+  esac
+done
+
+: ${sortflag:=${MLS_DEFAULT_SORT-dU}}
+
+if [ ${#args[@]} -eq 0 ]; then
+  args=(${MLS_DEFAULT_ARGS})
+fi
+
+case $archive in
+none)
+  args=("${args[@]}" "$MAIL_INBOX")
+  ;;
+incl)
+  args=("${args[@]}" "$MAIL_INBOX" "$MAIL_ARCHIVE")
+  ;;
+only)
+  args=("${args[@]}" "$MAIL_ARCHIVE")
+  ;;
+esac
+
+m:scan() {
+  if [ "$scan" != 1 ] && [ -z "$format" ]; then
+    cat
+    return $?
+  fi
+  if [ -z "$format" ]; then
+    mscan -f '%c%u%r\t%-3n\t%10d\t%17f\t%t %2i%s' |
+      column -s $'\t' -o ' | ' -et -N '-,#,DATE,FROM,SUBJECT'
+  else
+    mscan ${format:+-f "$format"}
+  fi
+}
+
+m:agrep() {
+  if [[ "$1" != *[a-z/]:*[A-Z]* ]]; then
+    set -- -i "$@"
+  fi
+  magrep "$@"
+}
+export -f m:agrep
+
+m:grep() {
+  if [ ${#greps[@]} = 0 ]; then
+    cat
+    return $?
+  fi
+  rere m:agrep -- "${greps[@]}"
+}
+
+m:cut() {
+  if [ -z "${cutcmd}" ]; then
+    cat
+    return $?
+  fi
+  $cutcmd $cutflag
+}
+
+mlist "${args[@]}" | m:grep | msort ${sortflag:+-${sortflag}} | m:scan | m:cut

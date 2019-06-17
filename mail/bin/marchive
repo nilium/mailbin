@@ -1,0 +1,4 @@
+#!/bin/bash
+mread "$@"
+mrefile "$@" ~/mail/archive
+mfix
