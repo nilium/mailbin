@@ -1,4 +1,5 @@
 #!/bin/bash
+: "${MAIL_ARCHIVE:=$HOME/mail/archive}"
 mread "$@"
-mrefile "$@" ~/mail/archive
+mrefile "$@" "${MAIL_ARCHIVE}"
 mfix
