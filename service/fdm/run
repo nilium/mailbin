@@ -1,0 +1,34 @@
+#!/bin/bash
+
+[ -r ./conf ] && . ./conf
+
+export MAIL_INBOX="${MAIL_INBOX:-$HOME/mail}"
+export DISPLAY="${DISPLAY:-:0}"
+export MAILICON="${MAILICON:-/usr/share/icons/gnome/scalable/apps/internet-mail.svg}"
+
+mail:notify() {
+  notify-send -a Mail ${MAILICON:+-i "$MAILICON"} "$@"
+}
+export -f mail:notify
+
+schedule:notify() {
+  local summary="$(mscan -f '%f' "$1")"
+  local body="$(mscan -f $'%t %s\n<i>%d</i>' "$1")"
+  mail:notify "$summary" "$body"
+}
+export -f schedule:notify
+
+schedule:fdm() {
+  fdm -v fetch
+  # Send notifications
+  local nmsg="$(mlist -N "$MAIL_INBOX" | wc -l | fex 1)"
+  mlist -N "$MAIL_INBOX" | head -n4 | xargs --no-run-if-empty -L1 bash -c 'schedule:notify "$@"' _
+  if [ "$nmsg" -gt 4 ]; then
+    mail:notify "Received ${nmsg} new emails" "Additional emails not shown in notifications."
+  fi
+  # Incorporate new emails
+  mdirs "$MAIL_INBOX" | xargs minc
+}
+export -f schedule:fdm
+
+exec snooze -H \* -M /2 bash -c schedule:fdm 2>&1

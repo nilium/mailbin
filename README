@@ -30,3 +30,19 @@ Setting up the maildirs is simple:
     $ mmkdir ~/mail ~/mail/archive
 
 If possible, you should encrypt your maildir(s) using encfs.
+
+
+Service (fdm)
+-------------
+
+If using the fdm service, it assumes that you have a user runsvdir
+process controlling ~/var/service/ and a user-owend ~/run tmpfs.
+
+For example:
+
+    # /etc/fstab
+    # ...
+    tmpfs /home/username/run tmpfs defaults,uid=1234,gid=1234 0 0
+
+If you do not, you can set up fdm in your system services dir and modify
+it to run with chpst.
