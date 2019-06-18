@@ -1,10 +1,5 @@
 #!/bin/bash
-: "${MAIL_INBOX:=$HOME/mail}"
-: "${MAIL_ARCHIVE:=$HOME/mail/archive}"
-
-args=()
 scan=0
-archive=none
 if [ -t 1 ]; then
   scan=1
 fi
@@ -13,7 +8,6 @@ sortflag=
 cutcmd=
 cutflag=
 format=
-useseq=0
 
 greps=()
 for arg; do
@@ -22,24 +16,19 @@ for arg; do
   +*)
     arg="${arg#+}"
     format+="${format:+${arg:+ }}${arg}"
+    shift
     ;;
   %*)
     format+="${format:+${arg:+ }}${arg}"
-    ;;
-  -k)
-    useseq=1
+    shift
     ;;
   -L)
     scan=1
+    shift
     ;;
   -l)
     scan=0
-    ;;
-  -a)
-    archive=incl
-    ;;
-  -A)
-    archive=only
+    shift
     ;;
   ,[rfdsFMSUI]*)
     sortflag+=${arg#,}
@@ -52,35 +41,17 @@ for arg; do
     cutflag=-n$arg
     cutcmd=head
     ;;
-  -*)
-    args[${#args[@]}]="$arg"
-    ;;
   /:*|*[a-zA-Z]:*)
     greps[${#greps[@]}]="$arg"
     ;;
   *)
-    args[${#args[@]}]="$arg"
+    echo "unrecognized argument: $arg" >&2
+    exit 1
     ;;
   esac
 done
 
 : ${sortflag:=${MLS_DEFAULT_SORT-dU}}
-
-if [ ${#args[@]} -eq 0 ]; then
-  args=(${MLS_DEFAULT_ARGS})
-fi
-
-case $archive in
-none)
-  args=("${args[@]}" "$MAIL_INBOX")
-  ;;
-incl)
-  args=("${args[@]}" "$MAIL_INBOX" "$MAIL_ARCHIVE")
-  ;;
-only)
-  args=("${args[@]}" "$MAIL_ARCHIVE")
-  ;;
-esac
 
 m:scan() {
   if [ "$scan" != 1 ] && [ -z "$format" ]; then
@@ -119,12 +90,4 @@ m:cut() {
   $cutcmd $cutflag
 }
 
-list() {
-  if [ $useseq = 0 ]; then
-    mlist "${args[@]}"
-  else
-    mseq
-  fi
-}
-
-list | m:grep | msort ${sortflag:+-${sortflag}} | m:scan | m:cut
+m:grep | msort ${sortflag:+-${sortflag}} | m:scan | m:cut

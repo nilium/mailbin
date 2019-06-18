@@ -6,7 +6,7 @@ all:
 	@echo "* install - Install the mail package to $(HOME) (HOME)."
 
 dryrun:
-	stow --no --verbose --dir . --target "$(HOME)" --stow mail
+	stow --no --verbose --dir . --target "$(HOME)" --restow mail
 
 install:
-	stow --verbose --dir . --target "$(HOME)" --stow mail
+	stow --verbose --dir . --target "$(HOME)" --restow mail

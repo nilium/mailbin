@@ -1,3 +1,3 @@
 #!/bin/bash
-mls | mflag -S
-mseq -f | mseq -S
+mls "$@" | mflag -S
+mfix
