@@ -4,6 +4,24 @@ if [ -t 1 ]; then
   scan=1
 fi
 
+inargs=()
+input=m:cat
+if [ -t 0 ]; then
+  input=m:seq
+fi
+
+m:cat() {
+  if [ $# -gt 0 ]; then
+    echo >&2 "bad argument: ${1}"
+    exit 1
+  fi
+  cat
+}
+
+m:seq() {
+  mseq "$@"
+}
+
 sortflag=
 cutcmd=
 cutflag=
@@ -45,8 +63,7 @@ for arg; do
     greps[${#greps[@]}]="$arg"
     ;;
   *)
-    echo "unrecognized argument: $arg" >&2
-    exit 1
+    inargs[${#inargs[@]}]="$arg"
     ;;
   esac
 done
@@ -90,4 +107,4 @@ m:cut() {
   $cutcmd $cutflag
 }
 
-m:grep | msort ${sortflag:+-${sortflag}} | m:scan | m:cut
+$input "${inargs[@]}" | m:grep | msort ${sortflag:+-${sortflag}} | m:scan | m:cut
