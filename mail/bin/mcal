@@ -1,0 +1,10 @@
+#!/bin/bash
+mfilter \
+  /:'Invitation from Google Calendar' \
+  /:'https://www\.google\.com/calendar/event\?action=VIEW&' \
+  "$@" \
+  |
+  parallel -k $'
+    mscan {}
+    mshow {} | grep --color=never -oEe \'https://www\\.google.com/calendar/event\\?action=VIEW&[^ ]+\'
+    '
